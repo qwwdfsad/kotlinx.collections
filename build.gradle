@@ -1,0 +1,65 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { url "https://kotlin.bintray.com/kotlinx" }
+        maven { url 'http://dl.bintray.com/kotlin/kotlin-dev' }
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    configurations.classpath {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name != 'kotlin-native-gradle-plugin') {
+                    // fix version of all dependencies from org.jetbrains.kotlin group
+                    // even when other dependencies require other versions indirectly,
+                    // except kotlin-native, which has its own pre-release versioning
+                    details.useVersion kotlin_version
+                }
+            }
+        }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
+        classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlinx" }
+    }
+}
+
+configure(subprojects) {
+    def platform = platformOf(it)
+    apply from: rootProject.file("gradle/compile-${platform}.gradle")
+
+    if (it.name == 'kotlinx-commons') {
+        return
+    }
+
+    def impl = "kotlinx-commons-$platform"
+    if (it.name == impl) {
+        dependencies {
+            expectedBy project(':kotlinx-commons')
+        }
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+    freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental", "-XXLanguage:+InlineClasses"]
+
+}
+
+static def platformOf(project) {
+    if (project.name.endsWith("-jvm")) return "jvm"
+    if (project.name.endsWith("-js")) return "js"
+    if (project.name.endsWith("-native")) return "native"
+    return "common"
+}

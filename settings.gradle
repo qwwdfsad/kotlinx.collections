@@ -1,0 +1,3 @@
+rootProject.name = 'kotlinx.collections'
+
+include 'kotlinx-commons', 'kotlinx-commons-jvm', 'kotlinx-commons-js', 'kotlinx-commons-native'

@@ -1,0 +1,5 @@
+
+dependencies {
+    compile group: 'com.google.guava', name: 'guava', version: '26.0-jre'
+    testCompile group: 'com.google.guava', name: 'guava-testlib', version: '26.0-jre'
+}
